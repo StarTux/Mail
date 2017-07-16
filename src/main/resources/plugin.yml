@@ -8,9 +8,13 @@ commands:
   mailto:
     description: Send mail
     permission: mail.mailto
+    usage: /mailto <player> <message:
   mail:
     description: Mailbox access
     permission: mail.mail
+    usage: |-
+      /mailto - See unread mail
+      /mailto all - See all mail
 permissions:
   mail.mail:
     description: Read mail
