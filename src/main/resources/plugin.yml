@@ -2,6 +2,7 @@ name: Mail
 description: Mail Plugin
 author: StarTux
 version: 0.1
+website: https://cavetale.com
 main: com.winthier.mail.MailPlugin
 depend: [ SQL ]
 commands:
