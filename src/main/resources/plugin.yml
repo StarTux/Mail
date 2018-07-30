@@ -9,7 +9,7 @@ commands:
   mailto:
     description: Send mail
     permission: mail.mailto
-    usage: /mailto <player> <message:
+    usage: /mailto <player> <message>
   mail:
     description: Mailbox access
     permission: mail.mail
