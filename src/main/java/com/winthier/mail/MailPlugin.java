@@ -103,7 +103,7 @@ public final class MailPlugin extends JavaPlugin implements Listener {
                                "/mail all",
                                ChatColor.BLUE));
         } else if (cmd.equals("all")) {
-            List<SQLMail> mails = db.find(SQLMail.class).eq("owner", uuid).eq("recipient", uuid).findList();
+            List<SQLMail> mails = db.find(SQLMail.class).eq("owner", uuid).findList();
             Msg.info(player, "You have " + mails.size() + " mails.");
             for (SQLMail mail: mails) {
                 Msg.raw(player, Msg.button("&a[" + mail.getId() + "] &b" + mail.getSenderName() + ": &r" + mail.getShortMessage(),
