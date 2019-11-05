@@ -1,10 +1,12 @@
 name: Mail
+version: 0.1
 description: Mail Plugin
 author: StarTux
-version: 0.1
-website: https://cavetale.com
+api-version: 1.13
+website: https://github.com/StarTux/Mail
 main: com.winthier.mail.MailPlugin
-depend: [ SQL ]
+depend: [SQL]
+softdepend: []
 commands:
   mailto:
     description: Send mail

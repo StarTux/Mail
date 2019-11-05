@@ -29,7 +29,7 @@ public final class Msg {
 
     public static void info(CommandSender to, String msg, Object... args) {
         if (to instanceof Player) {
-            Player player = (Player)to;
+            Player player = (Player) to;
             player.sendMessage(format("&r[&3Mail&r] ") + format(msg, args));
             sendActionBar(player, "&a" + msg, args);
         } else {
@@ -39,7 +39,7 @@ public final class Msg {
 
     public static void warn(CommandSender to, String msg, Object... args) {
         if (to instanceof Player) {
-            Player player = (Player)to;
+            Player player = (Player) to;
             player.sendMessage(format("&r[&cMail&r] &c") + format(msg, args));
             sendActionBar(player, "&c" + msg, args);
         } else {
@@ -55,18 +55,22 @@ public final class Msg {
     public static void raw(Player player, Object... obj) {
         if (obj.length == 0) return;
         if (obj.length == 1) {
-            consoleCommand("minecraft:tellraw %s %s", player.getName(), JSONValue.toJSONString(obj[0]));
+            consoleCommand("minecraft:tellraw %s %s", player.getName(),
+                           JSONValue.toJSONString(obj[0]));
         } else {
-            consoleCommand("minecraft:tellraw %s %s", player.getName(), JSONValue.toJSONString(Arrays.asList(obj)));
+            consoleCommand("minecraft:tellraw %s %s", player.getName(),
+                           JSONValue.toJSONString(Arrays.asList(obj)));
         }
     }
 
     public static void sendActionBar(Player player, String msg, Object... args) {
         Object o = button(format(msg, args), null, null, null);
-        consoleCommand("minecraft:title %s actionbar %s", player.getName(), JSONValue.toJSONString(o));
+        consoleCommand("minecraft:title %s actionbar %s", player.getName(),
+                       JSONValue.toJSONString(o));
     }
 
-    public static Object button(String chat, String insertion, String tooltip, String command, ChatColor... colors) {
+    public static Object button(String chat, String insertion, String tooltip,
+                                String command, ChatColor... colors) {
         Map<String, Object> map = new HashMap<>();
         map.put("text", format(chat));
         if (colors != null) {

@@ -12,14 +12,28 @@ import lombok.Data;
 @Table(name = "mails")
 public final class SQLMail {
     @Id private Integer id;
-    @Column(nullable = false) private UUID owner, sender, recipient;
-    @Column(nullable = false, length = 1023) private String message;
-    @Column(nullable = false) private boolean read;
-    @Column(nullable = false) private Date created;
+
+    @Column(nullable = false)
+    private UUID owner;
+
+    @Column(nullable = false)
+    private UUID sender;
+
+    @Column(nullable = false)
+    private UUID recipient;
+
+    @Column(nullable = false, length = 1023)
+    private String message;
+
+    @Column(nullable = false)
+    private boolean read;
+
+    @Column(nullable = false)
+    private Date created;
 
     public SQLMail() { }
 
-    public SQLMail(SQLMail o) {
+    public SQLMail(final SQLMail o) {
         this.id = o.id;
         this.owner = o.owner;
         this.sender = o.sender;
