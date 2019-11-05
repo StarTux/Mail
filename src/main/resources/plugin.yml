@@ -16,8 +16,8 @@ commands:
     description: Mailbox access
     permission: mail.mail
     usage: |-
-      /mailto - See unread mail
-      /mailto all - See all mail
+      /mail - See unread mail
+      /mail all - See all mail
 permissions:
   mail.mail:
     description: Read mail
