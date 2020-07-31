@@ -5,6 +5,7 @@ import com.cavetale.sidebar.Priority;
 import com.winthier.sql.SQLDatabase;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
@@ -95,9 +96,9 @@ public final class MailPlugin extends JavaPlugin implements Listener {
     }
 
     void updateSidebarList() {
-        Set<UUID> onlineIds = getServer().getOnlinePlayers().stream()
+        List<UUID> onlineIds = getServer().getOnlinePlayers().stream()
             .map(Player::getUniqueId)
-            .collect(Collectors.toCollection(HashSet::new));
+            .collect(Collectors.toList());
         db.find(SQLMail.class)
             .eq("owner", onlineIds)
             .eq("read", false)
