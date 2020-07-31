@@ -14,8 +14,6 @@ import org.bukkit.ChatColor;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
-import org.bukkit.event.player.PlayerJoinEvent;
-import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitTask;
 
@@ -36,18 +34,7 @@ public final class MailPlugin extends JavaPlugin implements Listener {
         getServer().getPluginManager().registerEvents(this, this);
         getCommand("mail").setExecutor(mailCommand);
         getCommand("mailto").setExecutor(mailToCommand);
-        for (Player player: getServer().getOnlinePlayers()) {
-            launchTask(player);
-        }
         getServer().getScheduler().runTaskTimer(this, this::updateSidebarList, 100, 100);
-    }
-
-    void launchTask(Player player) {
-        cancelTask(player);
-        BukkitTask task = getServer().getScheduler().runTaskTimer(this, () -> {
-                remindPlayer(player);
-            }, 20 * 5, 20 * 60);
-        tasks.put(player.getUniqueId(), task);
     }
 
     void cancelTask(Player player) {
@@ -56,42 +43,11 @@ public final class MailPlugin extends JavaPlugin implements Listener {
     }
 
     @EventHandler
-    public void onPlayerJoin(PlayerJoinEvent event) {
-        launchTask(event.getPlayer());
-    }
-
-    @EventHandler
-    public void onPlayerQuit(PlayerQuitEvent event) {
-        cancelTask(event.getPlayer());
-    }
-
-    @EventHandler
     public void onPlayerSidebar(PlayerSidebarEvent event) {
         if (!sidebarList.contains(event.getPlayer().getUniqueId())) return;
         event.addLines(this, Priority.HIGH,
                        ChatColor.AQUA + "You have mail!",
                        ChatColor.GRAY + "  Type " + ChatColor.YELLOW + "/mail");
-    }
-
-    void remindPlayer(Player player) {
-        if (!player.isOnline()) {
-            cancelTask(player);
-            return;
-        }
-        UUID uuid = player.getUniqueId();
-        int count = db.find(SQLMail.class)
-            .eq("owner", uuid)
-            .eq("recipient", uuid)
-            .eq("read", false)
-            .findRowCount();
-        if (count > 0) {
-            Msg.sendActionBar(player, "&aYou have mail");
-            Msg.raw(player, Msg.button("&rYou have mail. &a[Click here]",
-                                       null,
-                                       "&a/mail\n&r&oView your mail.",
-                                       "/mail",
-                                       ChatColor.GREEN));
-        }
     }
 
     void updateSidebarList() {

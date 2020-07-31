@@ -31,7 +31,6 @@ public final class Msg {
         if (to instanceof Player) {
             Player player = (Player) to;
             player.sendMessage(format("&r[&3Mail&r] ") + format(msg, args));
-            sendActionBar(player, "&a" + msg, args);
         } else {
             send(to, msg, args);
         }
@@ -41,7 +40,6 @@ public final class Msg {
         if (to instanceof Player) {
             Player player = (Player) to;
             player.sendMessage(format("&r[&cMail&r] &c") + format(msg, args));
-            sendActionBar(player, "&c" + msg, args);
         } else {
             send(to, msg, args);
         }
@@ -61,12 +59,6 @@ public final class Msg {
             consoleCommand("minecraft:tellraw %s %s", player.getName(),
                            JSONValue.toJSONString(Arrays.asList(obj)));
         }
-    }
-
-    public static void sendActionBar(Player player, String msg, Object... args) {
-        Object o = button(format(msg, args), null, null, null);
-        consoleCommand("minecraft:title %s actionbar %s", player.getName(),
-                       JSONValue.toJSONString(o));
     }
 
     public static Object button(String chat, String insertion, String tooltip,

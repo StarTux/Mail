@@ -43,7 +43,6 @@ final class MailToCommand implements CommandExecutor {
             plugin.db.save(mailCopy);
             Player target = plugin.getServer().getPlayer(recipient.getUuid());
             if (target != null) {
-                Msg.sendActionBar(target, "&aYou have mail");
                 Msg.raw(target, Msg.button("&rYou have mail. &a[Click here]",
                                            null,
                                            "&a/mail\n&r&oView your mail.",
