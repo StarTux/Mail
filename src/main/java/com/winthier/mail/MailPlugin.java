@@ -1,9 +1,14 @@
 package com.winthier.mail;
 
+import com.cavetale.sidebar.PlayerSidebarEvent;
+import com.cavetale.sidebar.Priority;
 import com.winthier.sql.SQLDatabase;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 import lombok.Getter;
 import org.bukkit.ChatColor;
 import org.bukkit.entity.Player;
@@ -21,6 +26,7 @@ public final class MailPlugin extends JavaPlugin implements Listener {
     final Map<UUID, BukkitTask> tasks = new HashMap<>();
     MailToCommand mailToCommand = new MailToCommand(this);
     MailCommand mailCommand = new MailCommand(this);
+    final Set<UUID> sidebarList = new HashSet<>();
 
     @Override
     public void onEnable() {
@@ -33,6 +39,7 @@ public final class MailPlugin extends JavaPlugin implements Listener {
         for (Player player: getServer().getOnlinePlayers()) {
             launchTask(player);
         }
+        getServer().getScheduler().runTaskTimer(this, this::updateSidebarList, 100, 100);
     }
 
     void launchTask(Player player) {
@@ -58,6 +65,14 @@ public final class MailPlugin extends JavaPlugin implements Listener {
         cancelTask(event.getPlayer());
     }
 
+    @EventHandler
+    public void onPlayerSidebar(PlayerSidebarEvent event) {
+        if (!sidebarList.contains(event.getPlayer().getUniqueId())) return;
+        event.addLines(this, Priority.HIGH,
+                       ChatColor.AQUA + "You have mail!",
+                       ChatColor.GRAY + "  Type " + ChatColor.YELLOW + "/mail");
+    }
+
     void remindPlayer(Player player) {
         if (!player.isOnline()) {
             cancelTask(player);
@@ -77,5 +92,20 @@ public final class MailPlugin extends JavaPlugin implements Listener {
                                        "/mail",
                                        ChatColor.GREEN));
         }
+    }
+
+    void updateSidebarList() {
+        Set<UUID> onlineIds = getServer().getOnlinePlayers().stream()
+            .map(Player::getUniqueId)
+            .collect(Collectors.toCollection(HashSet::new));
+        db.find(SQLMail.class)
+            .eq("owner", onlineIds)
+            .eq("read", false)
+            .findListAsync(mails -> {
+                    sidebarList.clear();
+                    for (SQLMail mail : mails) {
+                        sidebarList.add(mail.getOwner());
+                    }
+                });
     }
 }

@@ -17,6 +17,12 @@
       <url>https://hub.spigotmc.org/nexus/content/repositories/snapshots/</url>
     </repository>
 
+    <!-- Cavetale Repo -->
+    <repository>
+      <id>cavetale</id>
+      <url>https://cavetale.com/jenkins/plugin/repository/everything/</url>
+    </repository>
+
   </repositories>
   <dependencies>
 
@@ -48,6 +54,14 @@
     <dependency>
       <groupId>com.winthier.sql</groupId>
       <artifactId>sql</artifactId>
+      <version>0.1-SNAPSHOT</version>
+      <scope>provided</scope>
+    </dependency>
+
+    <!-- Sidebar -->
+    <dependency>
+      <groupId>com.cavetale.sidebar</groupId>
+      <artifactId>sidebar</artifactId>
       <version>0.1-SNAPSHOT</version>
       <scope>provided</scope>
     </dependency>

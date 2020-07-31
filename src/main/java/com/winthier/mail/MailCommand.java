@@ -88,6 +88,7 @@ final class MailCommand implements CommandExecutor {
             if (!mail.isRead()) {
                 mail.setRead(true);
                 plugin.db.save(mail);
+                plugin.updateSidebarList();
             }
         } else {
             return false;
