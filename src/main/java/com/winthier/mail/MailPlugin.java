@@ -99,7 +99,7 @@ public final class MailPlugin extends JavaPlugin implements Listener {
             .map(Player::getUniqueId)
             .collect(Collectors.toCollection(HashSet::new));
         db.find(SQLMail.class)
-            .eq("owner", onlineIds)
+            .in("owner", onlineIds)
             .eq("read", false)
             .findListAsync(mails -> {
                     sidebarList.clear();
