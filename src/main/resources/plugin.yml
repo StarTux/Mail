@@ -5,7 +5,7 @@ author: StarTux
 api-version: 1.13
 website: https://github.com/StarTux/Mail
 main: com.winthier.mail.MailPlugin
-depend: [SQL, PlayerCache]
+depend: [SQL, PlayerCache, Sidebar]
 softdepend: []
 commands:
   mailto:
