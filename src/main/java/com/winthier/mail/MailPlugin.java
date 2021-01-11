@@ -45,9 +45,7 @@ public final class MailPlugin extends JavaPlugin implements Listener {
     @EventHandler
     public void onPlayerSidebar(PlayerSidebarEvent event) {
         if (!sidebarList.contains(event.getPlayer().getUniqueId())) return;
-        event.addLines(this, Priority.HIGH,
-                       ChatColor.AQUA + "You have mail!",
-                       ChatColor.GRAY + "  Type " + ChatColor.YELLOW + "/mail");
+        event.addLines(this, Priority.HIGH, ChatColor.AQUA + "You have " + ChatColor.YELLOW + "/mail");
     }
 
     void updateSidebarList() {
