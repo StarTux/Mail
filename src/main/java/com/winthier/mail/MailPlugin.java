@@ -52,6 +52,10 @@ public final class MailPlugin extends JavaPlugin implements Listener {
         Set<UUID> onlineIds = getServer().getOnlinePlayers().stream()
             .map(Player::getUniqueId)
             .collect(Collectors.toCollection(HashSet::new));
+        if (onlineIds.isEmpty()) {
+            sidebarList.clear();
+            return;
+        }
         db.find(SQLMail.class)
             .in("owner", onlineIds)
             .eq("read", false)
