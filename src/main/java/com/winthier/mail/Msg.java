@@ -1,5 +1,7 @@
 package com.winthier.mail;
 
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -9,9 +11,10 @@ import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
-import org.json.simple.JSONValue;
 
 public final class Msg {
+    static final Gson GSON = new GsonBuilder().disableHtmlEscaping().create();
+
     private Msg() { }
 
     public static String format(String msg, Object... args) {
@@ -54,10 +57,10 @@ public final class Msg {
         if (obj.length == 0) return;
         if (obj.length == 1) {
             consoleCommand("minecraft:tellraw %s %s", player.getName(),
-                           JSONValue.toJSONString(obj[0]));
+                           GSON.toJson(obj[0]));
         } else {
             consoleCommand("minecraft:tellraw %s %s", player.getName(),
-                           JSONValue.toJSONString(Arrays.asList(obj)));
+                           GSON.toJson(Arrays.asList(obj)));
         }
     }
 
@@ -106,14 +109,6 @@ public final class Msg {
             sb.append(tok.substring(1).toLowerCase());
         }
         return sb.toString();
-    }
-
-    public static Object parseJson(String s) {
-        return JSONValue.parse(s);
-    }
-
-    public static String toJsonString(Object o) {
-        return JSONValue.toJSONString(o);
     }
 
     private static List<String> wrapInternal(String what, int maxLineLength) {
