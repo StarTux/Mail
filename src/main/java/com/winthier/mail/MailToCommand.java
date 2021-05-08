@@ -1,5 +1,6 @@
 package com.winthier.mail;
 
+import com.winthier.chat.ChatPlugin;
 import com.winthier.playercache.PlayerCache;
 import java.util.Date;
 import java.util.UUID;
@@ -25,6 +26,7 @@ final class MailToCommand implements CommandExecutor {
         UUID senderUuid = sender instanceof Player
             ? ((Player) sender).getUniqueId()
             : MailPlugin.SERVER_UUID;
+        if (ChatPlugin.getInstance().doesIgnore(recipient.getUuid(), senderUuid)) return true;
         StringBuilder sb = new StringBuilder(args[1]);
         for (int i = 2; i < args.length; i += 1) sb.append(" ").append(args[i]);
         String message = sb.toString();

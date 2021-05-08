@@ -3,6 +3,7 @@ package com.winthier.mail;
 import com.cavetale.sidebar.PlayerSidebarEvent;
 import com.cavetale.sidebar.Priority;
 import com.winthier.sql.SQLDatabase;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -30,7 +31,18 @@ public final class MailPlugin extends JavaPlugin implements Listener {
     public void onEnable() {
         db = new SQLDatabase(this);
         db.registerTables(SQLMail.class);
-        db.createAllTables();
+        if (!db.createAllTables()) {
+            throw new IllegalStateException("Failed to setup database");
+        }
+        long deletionTimespan = 1000L * 60L * 60L * 24L * 30L * 3L; // 3 months
+        long now = System.currentTimeMillis();
+        Date then = new Date(now - deletionTimespan);
+        db.find(SQLMail.class).lt("created", then).deleteAsync(cnt -> {
+                long delay = System.currentTimeMillis() - now;
+                long s = delay / 1000L;
+                long ms = delay % 1000L;
+                getLogger().info("Deleted " + cnt + " mails older than " + then + " in " + s + "." + ms + "s");
+            });
         getServer().getPluginManager().registerEvents(this, this);
         getCommand("mail").setExecutor(mailCommand);
         getCommand("mailto").setExecutor(mailToCommand);
