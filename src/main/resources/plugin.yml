@@ -2,24 +2,34 @@ name: Mail
 version: 0.1
 description: Mail Plugin
 author: StarTux
-api-version: 1.13
+api-version: 1.17
 website: https://github.com/StarTux/Mail
 main: com.winthier.mail.MailPlugin
-depend: [SQL, PlayerCache, Chat, Sidebar]
+depend: [Core, SQL, PlayerCache, Chat, Sidebar]
 softdepend: []
 commands:
+
   mailto:
     description: Send mail
     permission: mail.mailto
     usage: /mailto <player> <message>
+
   mail:
     description: Mailbox access
     permission: mail.mail
     usage: |-
       /mail - See unread mail
       /mail all - See all mail
+
 permissions:
   mail.mail:
     description: Read mail
+    default: op
+
   mail.mailto:
     description: Send mail
+    default: op
+
+  mail.emoji:
+    description: Use emoji in mails
+    default: op

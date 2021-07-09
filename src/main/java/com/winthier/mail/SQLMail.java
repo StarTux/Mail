@@ -7,6 +7,11 @@ import javax.persistence.Column;
 import javax.persistence.Id;
 import javax.persistence.Table;
 import lombok.Data;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.TextComponent;
+import net.kyori.adventure.text.format.NamedTextColor;
+import net.kyori.adventure.text.serializer.gson.GsonComponentSerializer;
+import org.bukkit.command.CommandSender;
 
 @Data
 @Table(name = "mails")
@@ -22,7 +27,7 @@ public final class SQLMail {
     @Column(nullable = false)
     private UUID recipient;
 
-    @Column(nullable = false, length = 1023)
+    @Column(nullable = false, length = 4096)
     private String message;
 
     @Column(nullable = false)
@@ -56,5 +61,44 @@ public final class SQLMail {
 
     String getRecipientName() {
         return PlayerCache.nameForUuid(recipient);
+    }
+
+    public void setMessageComponent(Component component) {
+        message = GsonComponentSerializer.gson().serialize(component);
+    }
+
+    public Component getMessageComponent() {
+        return message.startsWith("{")
+            ? GsonComponentSerializer.gson().deserialize(message)
+            : Component.text(message, NamedTextColor.WHITE);
+    }
+
+    public Component getShortMessageComponent() {
+        if (!message.startsWith("{")) return Component.text(getShortMessage());
+        Component messageComponent = getMessageComponent();
+        int length = 0;
+        TextComponent.Builder result = Component.text();
+        int total = 0;
+        for (Component child : messageComponent.children()) {
+            if (!(child instanceof TextComponent)) {
+                result.append(child);
+                continue;
+            }
+            TextComponent textChild = (TextComponent) child;
+            int len = textChild.content().length();
+            if (total > 0 && total + len >= 16) break;
+            result.append(textChild);
+            total += len;
+        }
+        return result.build();
+    }
+
+    public void display(CommandSender viewer) {
+        Msg.send(viewer, "&bFrom: &r%s", getSenderName());
+        Msg.send(viewer, "&bTo: &r%s", getRecipientName());
+        viewer.sendMessage(Component.text()
+                           .append(Component.text("Message:", NamedTextColor.AQUA))
+                           .append(Component.space())
+                           .append(getMessageComponent()));
     }
 }

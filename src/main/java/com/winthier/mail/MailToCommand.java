@@ -1,18 +1,23 @@
 package com.winthier.mail;
 
+import com.cavetale.core.font.Emoji;
+import com.cavetale.core.font.GlyphPolicy;
 import com.winthier.chat.ChatPlugin;
 import com.winthier.playercache.PlayerCache;
+import java.util.Collections;
 import java.util.Date;
+import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
+import net.kyori.adventure.text.Component;
 import org.bukkit.ChatColor;
 import org.bukkit.command.Command;
-import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
+import org.bukkit.command.TabExecutor;
 import org.bukkit.entity.Player;
 
 @RequiredArgsConstructor
-final class MailToCommand implements CommandExecutor {
+final class MailToCommand implements TabExecutor {
     final MailPlugin plugin;
 
     @Override
@@ -33,7 +38,12 @@ final class MailToCommand implements CommandExecutor {
         SQLMail mail = new SQLMail();
         mail.setSender(senderUuid);
         mail.setRecipient(recipient.getUuid());
-        mail.setMessage(message);
+        if (sender.hasPermission("mail.emoji") && message.contains(":")) {
+            Component component = Emoji.replaceText(message, GlyphPolicy.PUBLIC, false).asComponent();
+            mail.setMessageComponent(component);
+        } else {
+            mail.setMessage(message);
+        }
         mail.setCreated(new Date());
         mail.setOwner(recipient.getUuid());
         SQLMail mailCopy = new SQLMail(mail);
@@ -51,7 +61,19 @@ final class MailToCommand implements CommandExecutor {
                                            "/mail",
                                            ChatColor.GREEN));
             }
+        } else {
+            mail.display(sender);
         }
         return true;
+    }
+
+    @Override
+    public List<String> onTabComplete(CommandSender sender, Command command, String alias, String[] args) {
+        if (args.length <= 1) return null;
+        String arg = args[args.length - 1];
+        if (sender.hasPermission("mail.emoji")) {
+            return Emoji.tabComplete(arg);
+        }
+        return Collections.emptyList();
     }
 }
