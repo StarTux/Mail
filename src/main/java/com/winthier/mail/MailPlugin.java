@@ -20,7 +20,8 @@ import org.bukkit.scheduler.BukkitTask;
 
 @Getter
 public final class MailPlugin extends JavaPlugin implements Listener {
-    static final UUID SERVER_UUID = new UUID(0, 0);
+    @Getter private static MailPlugin instance;
+    public static final UUID SERVER_UUID = new UUID(0, 0);
     SQLDatabase db;
     final Map<UUID, BukkitTask> tasks = new HashMap<>();
     MailToCommand mailToCommand = new MailToCommand(this);
@@ -29,6 +30,7 @@ public final class MailPlugin extends JavaPlugin implements Listener {
 
     @Override
     public void onEnable() {
+        instance = this;
         db = new SQLDatabase(this);
         db.registerTables(SQLMail.class);
         if (!db.createAllTables()) {

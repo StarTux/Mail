@@ -16,6 +16,8 @@ import org.bukkit.command.CommandSender;
 @Data
 @Table(name = "mails")
 public final class SQLMail {
+    public static final int SHORT_MESSAGE_LENGTH = 24;
+
     @Id private Integer id;
 
     @Column(nullable = false)
@@ -26,6 +28,9 @@ public final class SQLMail {
 
     @Column(nullable = false)
     private UUID recipient;
+
+    @Column(nullable = false, columnDefinition = "INT(1) NOT NULL DEFAULT 0")
+    private int contentType = 0; // 0: text, 1: json
 
     @Column(nullable = false, length = 4096)
     private String message;
@@ -43,6 +48,7 @@ public final class SQLMail {
         this.owner = o.owner;
         this.sender = o.sender;
         this.recipient = o.recipient;
+        this.contentType = o.contentType;
         this.message = o.message;
         this.read = o.read;
         this.created = o.created;
@@ -50,8 +56,8 @@ public final class SQLMail {
 
     String getShortMessage() {
         if (message == null) return "";
-        if (message.length() < 16) return message;
-        return message.substring(0, 16);
+        if (message.length() < SHORT_MESSAGE_LENGTH) return message;
+        return message.substring(0, SHORT_MESSAGE_LENGTH);
     }
 
     String getSenderName() {
@@ -64,29 +70,45 @@ public final class SQLMail {
     }
 
     public void setMessageComponent(Component component) {
+        contentType = 1;
         message = GsonComponentSerializer.gson().serialize(component);
     }
 
     public Component getMessageComponent() {
-        return message.startsWith("{")
-            ? GsonComponentSerializer.gson().deserialize(message)
-            : Component.text(message, NamedTextColor.WHITE);
+        if (contentType == 0) {
+            return Component.text(message, NamedTextColor.WHITE);
+        } else {
+            try {
+                return GsonComponentSerializer.gson().deserialize(message);
+            } catch (Exception e) {
+                MailPlugin.getInstance().getLogger().warning("Error deserializing " + toString());
+                e.printStackTrace();
+                return Component.text(message, NamedTextColor.WHITE);
+            }
+        }
     }
 
     public Component getShortMessageComponent() {
-        if (!message.startsWith("{")) return Component.text(getShortMessage());
-        Component messageComponent = getMessageComponent();
+        if (contentType == 0) return Component.text(getShortMessage());
+        final Component component;
+        try {
+            component = GsonComponentSerializer.gson().deserialize(message);
+        } catch (Exception e) {
+            MailPlugin.getInstance().getLogger().warning("Error deserializing " + toString());
+            e.printStackTrace();
+            return Component.text(getShortMessage());
+        }
         int length = 0;
         TextComponent.Builder result = Component.text();
         int total = 0;
-        for (Component child : messageComponent.children()) {
+        for (Component child : component.children()) {
             if (!(child instanceof TextComponent)) {
                 result.append(child);
                 continue;
             }
             TextComponent textChild = (TextComponent) child;
             int len = textChild.content().length();
-            if (total > 0 && total + len >= 16) break;
+            if (total > 0 && total + len >= SHORT_MESSAGE_LENGTH) break;
             result.append(textChild);
             total += len;
         }
