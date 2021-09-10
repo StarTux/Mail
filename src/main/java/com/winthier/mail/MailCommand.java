@@ -1,5 +1,7 @@
 package com.winthier.mail;
 
+import com.cavetale.core.event.player.PluginPlayerEvent.Detail;
+import com.cavetale.core.event.player.PluginPlayerEvent;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -104,6 +106,9 @@ final class MailCommand implements CommandExecutor {
                 mail.setRead(true);
                 plugin.db.saveAsync(mail, unused -> plugin.updateSidebarList());
             }
+            PluginPlayerEvent.Name.READ_MAIL.ultimate(plugin, player)
+                .detail(Detail.INDEX, mailId)
+                .call();
         } else {
             return false;
         }

@@ -1,12 +1,16 @@
+main: com.winthier.mail.MailPlugin
 name: Mail
+
 version: 0.1
+api-version: 1.17
+
 description: Mail Plugin
 author: StarTux
-api-version: 1.17
 website: https://github.com/StarTux/Mail
-main: com.winthier.mail.MailPlugin
+
 depend: [Core, SQL, PlayerCache, Chat, Sidebar]
 softdepend: []
+
 commands:
 
   mailto:
