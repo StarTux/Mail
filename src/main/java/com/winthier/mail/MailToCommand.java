@@ -1,5 +1,7 @@
 package com.winthier.mail;
 
+import com.cavetale.core.event.player.PluginPlayerEvent.Detail;
+import com.cavetale.core.event.player.PluginPlayerEvent;
 import com.cavetale.core.font.Emoji;
 import com.cavetale.core.font.GlyphPolicy;
 import com.winthier.chat.ChatPlugin;
@@ -63,6 +65,11 @@ final class MailToCommand implements TabExecutor {
             }
         } else {
             mail.display(sender);
+        }
+        if (sender instanceof Player) {
+            PluginPlayerEvent.Name.SEND_MAIL.ultimate(plugin, (Player) sender)
+                .detail(Detail.TARGET, recipient.getUuid())
+                .call();
         }
         return true;
     }
