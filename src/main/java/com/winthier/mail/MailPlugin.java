@@ -11,7 +11,8 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import lombok.Getter;
-import org.bukkit.ChatColor;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.format.NamedTextColor;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -59,7 +60,9 @@ public final class MailPlugin extends JavaPlugin implements Listener {
     @EventHandler
     public void onPlayerSidebar(PlayerSidebarEvent event) {
         if (!sidebarList.contains(event.getPlayer().getUniqueId())) return;
-        event.addLines(this, Priority.HIGH, ChatColor.AQUA + "You have " + ChatColor.YELLOW + "/mail");
+        event.add(this, Priority.HIGH,
+                  Component.text("You have ", NamedTextColor.AQUA)
+                  .append(Component.text("/mail", NamedTextColor.YELLOW)));
     }
 
     void updateSidebarList() {
