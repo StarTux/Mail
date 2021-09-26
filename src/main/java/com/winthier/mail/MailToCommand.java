@@ -12,6 +12,7 @@ import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.JoinConfiguration;
 import org.bukkit.ChatColor;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
@@ -64,7 +65,7 @@ final class MailToCommand implements TabExecutor {
                                            ChatColor.GREEN));
             }
         } else {
-            mail.display(sender);
+            sender.sendMessage(Component.join(JoinConfiguration.separator(Component.newline()), mail.makeDisplay()));
         }
         if (sender instanceof Player) {
             PluginPlayerEvent.Name.SEND_MAIL.ultimate(plugin, (Player) sender)

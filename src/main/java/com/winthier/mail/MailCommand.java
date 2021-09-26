@@ -2,14 +2,16 @@ package com.winthier.mail;
 
 import com.cavetale.core.event.player.PluginPlayerEvent.Detail;
 import com.cavetale.core.event.player.PluginPlayerEvent;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.ComponentLike;
+import net.kyori.adventure.text.JoinConfiguration;
 import net.kyori.adventure.text.event.ClickEvent;
+import net.kyori.adventure.text.event.HoverEvent;
 import net.kyori.adventure.text.format.NamedTextColor;
-import net.kyori.adventure.text.format.TextDecoration;
-import org.bukkit.ChatColor;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
@@ -26,52 +28,18 @@ final class MailCommand implements CommandExecutor {
         UUID uuid = player.getUniqueId();
         String cmd = args.length > 0 ? args[0].toLowerCase() : null;
         if (cmd == null) {
-            List<SQLMail> mails = plugin.db.find(SQLMail.class)
+            plugin.db.find(SQLMail.class)
                 .eq("owner", uuid)
                 .eq("recipient", uuid)
                 .eq("read", false)
-                .findList();
-            Msg.info(player, "You have " + mails.size() + " unread mails.");
-            for (SQLMail mail: mails) {
-                Component tooltip = Component.text()
-                    .append(Component.text("/mail read " + mail.getId(), NamedTextColor.AQUA))
-                    .append(Component.newline())
-                    .append(Component.text("Read this mail.", NamedTextColor.GRAY))
-                    .decoration(TextDecoration.ITALIC, false)
-                    .build();
-                sender.sendMessage(Component.text()
-                                   .append(Component.text("[" + mail.getId() + "]", NamedTextColor.GRAY))
-                                   .append(Component.space())
-                                   .append(Component.text(mail.getSenderName(), NamedTextColor.AQUA))
-                                   .append(Component.text(":", NamedTextColor.GRAY))
-                                   .append(Component.space())
-                                   .append(mail.getShortMessageComponent())
-                                   .hoverEvent(tooltip)
-                                   .clickEvent(ClickEvent.runCommand("/mail read " + mail.getId()))
-                                   .build());
-            }
-            Msg.raw(player, " ",
-                    Msg.button("&a[Mailto]",
-                               null,
-                               "&a/mailto&2 <player> <message>\n&r&oWrite someone a mail.",
-                               "/mailto ",
-                               ChatColor.GREEN),
-                    "  ",
-                    Msg.button("&9[All]",
-                               null,
-                               "&a/mail all\n&r&oView all mails.",
-                               "/mail all",
-                               ChatColor.BLUE));
+                .findListAsync(mails -> listMails(player, mails, false));
+            return true;
         } else if (cmd.equals("all")) {
-            List<SQLMail> mails = plugin.db.find(SQLMail.class).eq("owner", uuid).findList();
-            Msg.info(player, "You have " + mails.size() + " mails.");
-            for (SQLMail mail: mails) {
-                String chat = "&a[" + mail.getId() + "] &b"
-                    + mail.getSenderName() + ": &r" + mail.getShortMessage();
-                String tooltip = "&a/mail read " + mail.getId() + "\n&r&oRead this mail.";
-                String click = "/mail read " + mail.getId();
-                Msg.raw(player, Msg.button(chat, null, tooltip, click, ChatColor.GREEN));
-            }
+            plugin.db.find(SQLMail.class)
+                .eq("owner", uuid)
+                .eq("recipient", uuid)
+                .findListAsync(mails -> listMails(player, mails, true));
+            return true;
         } else if (cmd.equals("read") && args.length == 2) {
             int mailId;
             try {
@@ -80,38 +48,94 @@ final class MailCommand implements CommandExecutor {
                 mailId = -1;
             }
             if (mailId < 0) return true;
-            SQLMail mail = plugin.db.find(SQLMail.class)
+            plugin.db.find(SQLMail.class)
                 .eq("id", mailId)
                 .eq("owner", uuid)
-                .findUnique();
-            if (mail == null) return true;
-            sender.sendMessage("");
-            mail.display(sender);
-            if (player != null) {
-                Msg.raw(player, " ",
-                        Msg.button("&a[Reply]",
-                                   null,
-                                   "&a/mailto " + mail.getSenderName() + "\n&r&oReply to this mail.",
-                                   "/mailto " + mail.getSenderName() + " ",
-                                   ChatColor.GREEN),
-                        "  ",
-                        Msg.button("&9[Mail]",
-                                   null,
-                                   "&a/mail\n&r&oCheck for more mail.",
-                                   "/mail",
-                                   ChatColor.BLUE));
-            }
-            sender.sendMessage("");
-            if (!mail.isRead()) {
-                mail.setRead(true);
-                plugin.db.saveAsync(mail, unused -> plugin.updateSidebarList());
-            }
-            PluginPlayerEvent.Name.READ_MAIL.ultimate(plugin, player)
-                .detail(Detail.INDEX, mailId)
-                .call();
+                .findUniqueAsync(mail -> readMail(player, mail));
+            return true;
         } else {
             return false;
         }
-        return true;
+    }
+
+    protected void listMails(Player player, List<SQLMail> mails, boolean isAll) {
+        if (mails.isEmpty()) {
+            player.sendMessage(Component.text("You have no" + (isAll ? "" : " unread") + " mail",
+                                              NamedTextColor.RED));
+            return;
+        }
+        List<ComponentLike> lines = new ArrayList<>();
+        lines.add(Component.text().color(NamedTextColor.WHITE)
+                  .content("You have ")
+                  .append(Component.text(mails.size(), NamedTextColor.GREEN))
+                  .append(Component.text(isAll ? " mails" : " unread mails"))
+                  .build());
+        for (SQLMail mail: mails) {
+            ComponentLike tooltip = Component.text()
+                .append(Component.text("/mail read " + mail.getId(), NamedTextColor.AQUA))
+                .append(Component.newline())
+                .append(Component.text("Read this mail.", NamedTextColor.GRAY));
+            lines.add(Component.text()
+                      .append(Component.text("[" + mail.getId() + "] ", NamedTextColor.GRAY))
+                      .append(Component.text(mail.getSenderName(), NamedTextColor.AQUA))
+                      .append(Component.text(": ", NamedTextColor.GRAY))
+                      .append(mail.getShortMessageComponent())
+                      .hoverEvent(HoverEvent.showText(tooltip))
+                      .clickEvent(ClickEvent.runCommand("/mail read " + mail.getId())));
+        }
+        do {
+            List<ComponentLike> buttons = new ArrayList<>();
+            buttons.add(Component.text("[MailTo]", NamedTextColor.GREEN)
+                        .hoverEvent(HoverEvent.showText(Component.join(JoinConfiguration.separator(Component.newline()), new Component[] {
+                                        Component.text("/mailto <player> <message>", NamedTextColor.GREEN),
+                                        Component.text("Send mail", NamedTextColor.GRAY),
+                                    })))
+                        .clickEvent(ClickEvent.suggestCommand("/mailto ")));
+            buttons.add(Component.text("[All]", NamedTextColor.BLUE)
+                        .hoverEvent(HoverEvent.showText(Component.join(JoinConfiguration.separator(Component.newline()), new Component[] {
+                                        Component.text("/mail all", NamedTextColor.GREEN),
+                                        Component.text("View read and unread messages", NamedTextColor.GRAY),
+                                    })))
+                        .clickEvent(ClickEvent.runCommand("/mail all")));
+            lines.add(Component.join(JoinConfiguration.separator(Component.space()), buttons));
+        } while (false);
+        player.sendMessage(Component.join(JoinConfiguration.separator(Component.newline()), lines));
+    }
+
+    protected void readMail(Player player, SQLMail mail) {
+        if (mail == null) return;
+        List<Component> lines = new ArrayList<>();
+        lines.add(Component.empty());
+        lines.addAll(mail.makeDisplay());
+        do {
+            List<Component> buttons = new ArrayList<>(2);
+            if (!plugin.SERVER_UUID.equals(mail.getSender())) {
+                Component replyTooltip = Component.join(JoinConfiguration.separator(Component.newline()), new Component[] {
+                        Component.text("/mailto " + mail.getSenderName(),
+                                       NamedTextColor.GREEN),
+                        Component.text("Reply to this mail", NamedTextColor.GRAY),
+                    });
+                buttons.add(Component.text("[Reply]", NamedTextColor.GREEN)
+                            .hoverEvent(HoverEvent.showText(replyTooltip))
+                            .clickEvent(ClickEvent.suggestCommand("/mailto " + mail.getSenderName() + " ")));
+            }
+            Component mailTooltip = Component.join(JoinConfiguration.separator(Component.newline()), new Component[] {
+                    Component.text("/mail", NamedTextColor.GREEN),
+                    Component.text("Check for more mail", NamedTextColor.GRAY),
+                });
+            buttons.add(Component.text("[Mail]", NamedTextColor.AQUA)
+                        .hoverEvent(HoverEvent.showText(mailTooltip))
+                        .clickEvent(ClickEvent.runCommand("/mail")));
+            lines.add(Component.join(JoinConfiguration.separator(Component.space()), buttons));
+        } while (false);
+        lines.add(Component.empty());
+        player.sendMessage(Component.join(JoinConfiguration.separator(Component.newline()), lines));
+        if (!mail.isRead()) {
+            mail.setRead(true);
+            plugin.db.updateAsync(mail, unused -> plugin.updateSidebarList(), "read");
+        }
+        PluginPlayerEvent.Name.READ_MAIL.ultimate(plugin, player)
+            .detail(Detail.INDEX, mail.getId())
+            .call();
     }
 }

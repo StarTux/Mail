@@ -2,6 +2,7 @@ package com.winthier.mail;
 
 import com.winthier.playercache.PlayerCache;
 import java.util.Date;
+import java.util.List;
 import java.util.UUID;
 import javax.persistence.Column;
 import javax.persistence.Id;
@@ -11,12 +12,11 @@ import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.TextComponent;
 import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.serializer.gson.GsonComponentSerializer;
-import org.bukkit.command.CommandSender;
 
 @Data
 @Table(name = "mails")
 public final class SQLMail {
-    public static final int SHORT_MESSAGE_LENGTH = 24;
+    public static final int SHORT_MESSAGE_LENGTH = 12;
 
     @Id private Integer id;
 
@@ -115,12 +115,12 @@ public final class SQLMail {
         return result.build();
     }
 
-    public void display(CommandSender viewer) {
-        Msg.send(viewer, "&bFrom: &r%s", getSenderName());
-        Msg.send(viewer, "&bTo: &r%s", getRecipientName());
-        viewer.sendMessage(Component.text()
-                           .append(Component.text("Message:", NamedTextColor.AQUA))
-                           .append(Component.space())
-                           .append(getMessageComponent()));
+    public List<Component> makeDisplay() {
+        return List.of(Component.text("From ", NamedTextColor.GREEN)
+                       .append(Component.text(getSenderName(), NamedTextColor.WHITE)),
+                       Component.text("To ", NamedTextColor.GREEN)
+                       .append(Component.text(getRecipientName(), NamedTextColor.WHITE)),
+                       Component.text("Message ", NamedTextColor.GREEN)
+                       .append(getMessageComponent()));
     }
 }
