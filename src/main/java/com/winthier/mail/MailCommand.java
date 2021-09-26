@@ -1,61 +1,79 @@
 package com.winthier.mail;
 
+import com.cavetale.core.command.AbstractCommand;
+import com.cavetale.core.command.CommandWarn;
 import com.cavetale.core.event.player.PluginPlayerEvent.Detail;
 import com.cavetale.core.event.player.PluginPlayerEvent;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.UUID;
-import lombok.RequiredArgsConstructor;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.ComponentLike;
 import net.kyori.adventure.text.JoinConfiguration;
 import net.kyori.adventure.text.event.ClickEvent;
 import net.kyori.adventure.text.event.HoverEvent;
 import net.kyori.adventure.text.format.NamedTextColor;
-import org.bukkit.command.Command;
-import org.bukkit.command.CommandExecutor;
-import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 
-@RequiredArgsConstructor
-final class MailCommand implements CommandExecutor {
-    final MailPlugin plugin;
+final class MailCommand extends AbstractCommand<MailPlugin> {
+    protected MailCommand(final MailPlugin plugin) {
+        super(plugin, "mail");
+    }
 
     @Override
-    public boolean onCommand(CommandSender sender, Command command, String alias, String[] args) {
-        Player player = sender instanceof Player ? (Player) sender : null;
-        if (player == null) return false;
-        UUID uuid = player.getUniqueId();
-        String cmd = args.length > 0 ? args[0].toLowerCase() : null;
-        if (cmd == null) {
-            plugin.db.find(SQLMail.class)
-                .eq("owner", uuid)
-                .eq("recipient", uuid)
-                .eq("read", false)
-                .findListAsync(mails -> listMails(player, mails, false));
-            return true;
-        } else if (cmd.equals("all")) {
-            plugin.db.find(SQLMail.class)
-                .eq("owner", uuid)
-                .eq("recipient", uuid)
-                .findListAsync(mails -> listMails(player, mails, true));
-            return true;
-        } else if (cmd.equals("read") && args.length == 2) {
-            int mailId;
-            try {
-                mailId = Integer.parseInt(args[1]);
-            } catch (NumberFormatException nfe) {
-                mailId = -1;
-            }
-            if (mailId < 0) return true;
-            plugin.db.find(SQLMail.class)
-                .eq("id", mailId)
-                .eq("owner", uuid)
-                .findUniqueAsync(mail -> readMail(player, mail));
-            return true;
-        } else {
-            return false;
+    protected void onEnable() {
+        rootNode.description("View unread mail")
+            .playerCaller((player, args) -> {
+                    if (args.length != 0) return false;
+                    plugin.db.find(SQLMail.class)
+                        .eq("owner", player.getUniqueId())
+                        .eq("recipient", player.getUniqueId())
+                        .eq("read", false)
+                        .findListAsync(mails -> listMails(player, mails, false));
+                    return true;
+                });
+        rootNode.addChild("all").denyTabCompletion()
+            .denyTabCompletion()
+            .description("View all mail")
+            .playerCaller((player, args) -> {
+                    if (args.length != 0) return false;
+                    plugin.db.find(SQLMail.class)
+                        .eq("owner", player.getUniqueId())
+                        .findListAsync(mails -> listMails(player, mails, true));
+                    return true;
+                });
+        rootNode.addChild("read").arguments("<id>")
+            .denyTabCompletion()
+            .description("Read a mail")
+            .playerCaller((player, args) -> {
+                    if (args.length != 1) return false;
+                    plugin.db.find(SQLMail.class)
+                        .eq("id", requireMailId(args[0]))
+                        .eq("owner", player.getUniqueId())
+                        .findUniqueAsync(mail -> readMail(player, mail));
+                    return true;
+                });
+        rootNode.addChild("delete").arguments("<id>")
+            .denyTabCompletion()
+            .description("Delete a mail")
+            .playerCaller((player, args) -> {
+                    if (args.length != 1) return false;
+                    plugin.db.find(SQLMail.class)
+                        .eq("id", requireMailId(args[0]))
+                        .eq("owner", player.getUniqueId())
+                        .deleteAsync(count -> deletedMail(player, count));
+                    return true;
+                });
+    }
+
+    protected int requireMailId(String arg) {
+        int mailId;
+        try {
+            mailId = Integer.parseInt(arg);
+        } catch (NumberFormatException nfe) {
+            throw new CommandWarn("Number expected: " + arg);
         }
+        if (mailId < 1) throw new CommandWarn("Invalid id: " + mailId);
+        return mailId;
     }
 
     protected void listMails(Player player, List<SQLMail> mails, boolean isAll) {
@@ -77,8 +95,7 @@ final class MailCommand implements CommandExecutor {
                 .append(Component.text("Read this mail.", NamedTextColor.GRAY));
             lines.add(Component.text()
                       .append(Component.text("[" + mail.getId() + "] ", NamedTextColor.GRAY))
-                      .append(Component.text(mail.getSenderName(), NamedTextColor.AQUA))
-                      .append(Component.text(": ", NamedTextColor.GRAY))
+                      .append(Component.text(mail.getSenderName() + ": ", NamedTextColor.GRAY))
                       .append(mail.getShortMessageComponent())
                       .hoverEvent(HoverEvent.showText(tooltip))
                       .clickEvent(ClickEvent.runCommand("/mail read " + mail.getId())));
@@ -91,12 +108,14 @@ final class MailCommand implements CommandExecutor {
                                         Component.text("Send mail", NamedTextColor.GRAY),
                                     })))
                         .clickEvent(ClickEvent.suggestCommand("/mailto ")));
-            buttons.add(Component.text("[All]", NamedTextColor.BLUE)
-                        .hoverEvent(HoverEvent.showText(Component.join(JoinConfiguration.separator(Component.newline()), new Component[] {
-                                        Component.text("/mail all", NamedTextColor.GREEN),
-                                        Component.text("View read and unread messages", NamedTextColor.GRAY),
-                                    })))
-                        .clickEvent(ClickEvent.runCommand("/mail all")));
+            if (!isAll) {
+                buttons.add(Component.text("[All]", NamedTextColor.BLUE)
+                            .hoverEvent(HoverEvent.showText(Component.join(JoinConfiguration.separator(Component.newline()), new Component[] {
+                                            Component.text("/mail all", NamedTextColor.GREEN),
+                                            Component.text("View read and unread messages", NamedTextColor.GRAY),
+                                        })))
+                            .clickEvent(ClickEvent.runCommand("/mail all")));
+            }
             lines.add(Component.join(JoinConfiguration.separator(Component.space()), buttons));
         } while (false);
         player.sendMessage(Component.join(JoinConfiguration.separator(Component.newline()), lines));
@@ -126,6 +145,13 @@ final class MailCommand implements CommandExecutor {
             buttons.add(Component.text("[Mail]", NamedTextColor.AQUA)
                         .hoverEvent(HoverEvent.showText(mailTooltip))
                         .clickEvent(ClickEvent.runCommand("/mail")));
+            Component deleteTooltip = Component.join(JoinConfiguration.separator(Component.newline()), new Component[] {
+                    Component.text("/mail delete " + mail.getId(), NamedTextColor.RED),
+                    Component.text("Delete this mail", NamedTextColor.GRAY),
+                });
+            buttons.add(Component.text("[Delete]", NamedTextColor.RED)
+                        .hoverEvent(HoverEvent.showText(deleteTooltip))
+                        .clickEvent(ClickEvent.runCommand("/mail delete " + mail.getId())));
             lines.add(Component.join(JoinConfiguration.separator(Component.space()), buttons));
         } while (false);
         lines.add(Component.empty());
@@ -137,5 +163,13 @@ final class MailCommand implements CommandExecutor {
         PluginPlayerEvent.Name.READ_MAIL.ultimate(plugin, player)
             .detail(Detail.INDEX, mail.getId())
             .call();
+    }
+
+    protected void deletedMail(Player player, int count) {
+        if (count == 0) {
+            player.sendMessage(Component.text("Mail not found!", NamedTextColor.RED));
+        } else {
+            player.sendMessage(Component.text("Mail deleted!", NamedTextColor.RED));
+        }
     }
 }

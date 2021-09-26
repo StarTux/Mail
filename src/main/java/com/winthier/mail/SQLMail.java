@@ -57,7 +57,7 @@ public final class SQLMail {
     String getShortMessage() {
         if (message == null) return "";
         if (message.length() < SHORT_MESSAGE_LENGTH) return message;
-        return message.substring(0, SHORT_MESSAGE_LENGTH);
+        return message.substring(0, SHORT_MESSAGE_LENGTH) + "...";
     }
 
     String getSenderName() {
@@ -112,7 +112,7 @@ public final class SQLMail {
             result.append(textChild);
             total += len;
         }
-        return result.build();
+        return result.append(Component.text("...")).build();
     }
 
     public List<Component> makeDisplay() {

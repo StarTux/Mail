@@ -47,7 +47,7 @@ public final class MailPlugin extends JavaPlugin implements Listener {
                 getLogger().info("Deleted " + cnt + " mails older than " + then + " in " + s + "." + ms + "s");
             });
         getServer().getPluginManager().registerEvents(this, this);
-        getCommand("mail").setExecutor(mailCommand);
+        mailCommand.enable();
         getCommand("mailto").setExecutor(mailToCommand);
         getServer().getScheduler().runTaskTimer(this, this::updateSidebarList, 100, 100);
     }
