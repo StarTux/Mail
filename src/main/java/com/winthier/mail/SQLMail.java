@@ -1,6 +1,7 @@
 package com.winthier.mail;
 
 import com.winthier.playercache.PlayerCache;
+import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
 import java.util.UUID;
@@ -9,6 +10,7 @@ import javax.persistence.Id;
 import javax.persistence.Table;
 import lombok.Data;
 import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.ComponentLike;
 import net.kyori.adventure.text.TextComponent;
 import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.serializer.gson.GsonComponentSerializer;
@@ -16,6 +18,7 @@ import net.kyori.adventure.text.serializer.gson.GsonComponentSerializer;
 @Data
 @Table(name = "mails")
 public final class SQLMail {
+    private static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("MMMM dd yyyy HH:mm");
     public static final int SHORT_MESSAGE_LENGTH = 12;
 
     @Id private Integer id;
@@ -115,12 +118,22 @@ public final class SQLMail {
         return result.append(Component.text("...")).build();
     }
 
-    public List<Component> makeDisplay() {
-        return List.of(Component.text("From ", NamedTextColor.GREEN)
+    public String formatDate() {
+        return DATE_FORMAT.format(created);
+    }
+
+    public List<ComponentLike> makeDisplay() {
+        return List.of(Component.text().color(NamedTextColor.WHITE)
+                       .append(Component.text("From ", NamedTextColor.GREEN))
                        .append(Component.text(getSenderName(), NamedTextColor.WHITE)),
-                       Component.text("To ", NamedTextColor.GREEN)
-                       .append(Component.text(getRecipientName(), NamedTextColor.WHITE)),
-                       Component.text("Message ", NamedTextColor.GREEN)
+                       Component.text().color(NamedTextColor.WHITE)
+                       .append(Component.text("To ", NamedTextColor.GREEN))
+                       .append(Component.text(getRecipientName())),
+                       Component.text().color(NamedTextColor.WHITE)
+                       .append(Component.text("Date ", NamedTextColor.GREEN))
+                       .append(Component.text(formatDate())),
+                       Component.text().color(NamedTextColor.WHITE)
+                       .append(Component.text("Message ", NamedTextColor.GREEN))
                        .append(getMessageComponent()));
     }
 }

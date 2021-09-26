@@ -1,17 +1,26 @@
 package com.winthier.mail;
 
 import com.cavetale.core.command.AbstractCommand;
+import com.cavetale.core.command.CommandArgCompleter;
 import com.cavetale.core.command.CommandWarn;
 import com.cavetale.core.event.player.PluginPlayerEvent.Detail;
 import com.cavetale.core.event.player.PluginPlayerEvent;
+import com.cavetale.core.font.Emoji;
+import com.cavetale.core.font.GlyphPolicy;
+import com.winthier.chat.ChatPlugin;
+import com.winthier.playercache.PlayerCache;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Date;
 import java.util.List;
+import java.util.UUID;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.ComponentLike;
 import net.kyori.adventure.text.JoinConfiguration;
 import net.kyori.adventure.text.event.ClickEvent;
 import net.kyori.adventure.text.event.HoverEvent;
 import net.kyori.adventure.text.format.NamedTextColor;
+import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 
 final class MailCommand extends AbstractCommand<MailPlugin> {
@@ -63,6 +72,10 @@ final class MailCommand extends AbstractCommand<MailPlugin> {
                         .deleteAsync(count -> deletedMail(player, count));
                     return true;
                 });
+        rootNode.addChild("send").arguments("<player> <message>")
+            .completers(PlayerCache.NAME_COMPLETER, Emoji.PUBLIC_COMPLETER, CommandArgCompleter.REPEAT)
+            .description("Send mail")
+            .senderCaller(this::send);
     }
 
     protected int requireMailId(String arg) {
@@ -123,7 +136,7 @@ final class MailCommand extends AbstractCommand<MailPlugin> {
 
     protected void readMail(Player player, SQLMail mail) {
         if (mail == null) return;
-        List<Component> lines = new ArrayList<>();
+        List<ComponentLike> lines = new ArrayList<>();
         lines.add(Component.empty());
         lines.addAll(mail.makeDisplay());
         do {
@@ -171,5 +184,57 @@ final class MailCommand extends AbstractCommand<MailPlugin> {
         } else {
             player.sendMessage(Component.text("Mail deleted!", NamedTextColor.RED));
         }
+    }
+
+    protected boolean send(CommandSender sender, String[] args) {
+        if (args.length < 2) return false;
+        PlayerCache recipient = PlayerCache.forArg(args[0]);
+        if (recipient == null) {
+            throw new CommandWarn("Player not found: " + args[0]);
+        }
+        UUID senderUuid = sender instanceof Player
+            ? ((Player) sender).getUniqueId()
+            : MailPlugin.SERVER_UUID;
+        if (ChatPlugin.getInstance().doesIgnore(recipient.getUuid(), senderUuid)) return true;
+        String message = String.join(" ", Arrays.copyOfRange(args, 1, args.length));
+        SQLMail mail = new SQLMail();
+        mail.setSender(senderUuid);
+        mail.setRecipient(recipient.getUuid());
+        if (sender.hasPermission("mail.emoji") && message.contains(":")) {
+            Component component = Emoji.replaceText(message, GlyphPolicy.PUBLIC, false).asComponent();
+            mail.setMessageComponent(component);
+        } else {
+            mail.setMessage(message);
+        }
+        mail.setCreated(new Date());
+        mail.setOwner(recipient.getUuid());
+        SQLMail mailCopy = new SQLMail(mail);
+        mailCopy.setOwner(senderUuid);
+        mailCopy.setRead(true);
+        plugin.db.saveAsync(mail, null);
+        sender.sendMessage(Component.text("Mail sent to " + recipient.name, NamedTextColor.GREEN));
+        if (!recipient.getUuid().equals(senderUuid)) {
+            plugin.db.saveAsync(mailCopy, null);
+            Player target = plugin.getServer().getPlayer(recipient.getUuid());
+            if (target != null) {
+                Component tooltip = Component.join(JoinConfiguration.separator(Component.newline()), new Component[] {
+                        Component.text("/mail", NamedTextColor.GREEN),
+                        Component.text("View unread mail", NamedTextColor.GRAY),
+                    });
+                target.sendMessage(Component.text().color(NamedTextColor.WHITE)
+                                   .content("You have mail. ")
+                                   .append(Component.text("[Click Here]", NamedTextColor.GREEN))
+                                   .hoverEvent(HoverEvent.showText(tooltip))
+                                   .clickEvent(ClickEvent.runCommand("/mail")));
+            }
+        } else {
+            sender.sendMessage(Component.join(JoinConfiguration.separator(Component.newline()), mail.makeDisplay()));
+        }
+        if (sender instanceof Player) {
+            PluginPlayerEvent.Name.SEND_MAIL.ultimate(plugin, (Player) sender)
+                .detail(Detail.TARGET, recipient.getUuid())
+                .call();
+        }
+        return true;
     }
 }

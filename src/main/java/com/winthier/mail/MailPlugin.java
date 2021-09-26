@@ -48,7 +48,7 @@ public final class MailPlugin extends JavaPlugin implements Listener {
             });
         getServer().getPluginManager().registerEvents(this, this);
         mailCommand.enable();
-        getCommand("mailto").setExecutor(mailToCommand);
+        mailToCommand.enable();
         getServer().getScheduler().runTaskTimer(this, this::updateSidebarList, 100, 100);
     }
 
