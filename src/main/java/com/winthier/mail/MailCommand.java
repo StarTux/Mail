@@ -93,7 +93,6 @@ final class MailCommand extends AbstractCommand<MailPlugin> {
         if (mails.isEmpty()) {
             player.sendMessage(Component.text("You have no" + (isAll ? "" : " unread") + " mail",
                                               NamedTextColor.RED));
-            return;
         }
         List<ComponentLike> lines = new ArrayList<>();
         lines.add(Component.text().color(NamedTextColor.WHITE)
