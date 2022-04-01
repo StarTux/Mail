@@ -67,6 +67,7 @@ public final class MailPlugin extends JavaPlugin implements Listener {
 
     void updateSidebarList() {
         Set<UUID> onlineIds = getServer().getOnlinePlayers().stream()
+            .filter(p -> p.hasPermission("mail.mail"))
             .map(Player::getUniqueId)
             .collect(Collectors.toCollection(HashSet::new));
         if (onlineIds.isEmpty()) {
