@@ -40,7 +40,8 @@ final class MailCommand extends AbstractCommand<MailPlugin> {
                         .findListAsync(mails -> listMails(player, mails, false));
                     return true;
                 });
-        rootNode.addChild("all").denyTabCompletion()
+        rootNode.addChild("list").denyTabCompletion()
+            .alias("all")
             .denyTabCompletion()
             .description("View all mail")
             .playerCaller((player, args) -> {
