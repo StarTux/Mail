@@ -1,6 +1,7 @@
 package com.winthier.mail;
 
 import com.winthier.playercache.PlayerCache;
+import com.winthier.sql.SQLRow;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
@@ -15,9 +16,8 @@ import net.kyori.adventure.text.TextComponent;
 import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.serializer.gson.GsonComponentSerializer;
 
-@Data
-@Table(name = "mails")
-public final class SQLMail {
+@Data @Table(name = "mails")
+public final class SQLMail implements SQLRow {
     private static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("MMMM dd yyyy HH:mm");
     public static final int SHORT_MESSAGE_LENGTH = 12;
 

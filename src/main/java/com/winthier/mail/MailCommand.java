@@ -173,9 +173,9 @@ final class MailCommand extends AbstractCommand<MailPlugin> {
             mail.setRead(true);
             plugin.db.updateAsync(mail, unused -> plugin.updateSidebarList(), "read");
         }
-        PluginPlayerEvent.Name.READ_MAIL.ultimate(plugin, player)
+        PluginPlayerEvent.Name.READ_MAIL.make(plugin, player)
             .detail(Detail.INDEX, mail.getId())
-            .call();
+            .callEvent();
     }
 
     protected void deletedMail(Player player, int count) {
@@ -231,9 +231,9 @@ final class MailCommand extends AbstractCommand<MailPlugin> {
             sender.sendMessage(Component.join(JoinConfiguration.separator(Component.newline()), mail.makeDisplay()));
         }
         if (sender instanceof Player) {
-            PluginPlayerEvent.Name.SEND_MAIL.ultimate(plugin, (Player) sender)
+            PluginPlayerEvent.Name.SEND_MAIL.make(plugin, (Player) sender)
                 .detail(Detail.TARGET, recipient.getUuid())
-                .call();
+                .callEvent();
         }
         return true;
     }
