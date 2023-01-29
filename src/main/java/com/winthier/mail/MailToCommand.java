@@ -3,7 +3,7 @@ package com.winthier.mail;
 import com.cavetale.core.command.AbstractCommand;
 import com.cavetale.core.command.CommandArgCompleter;
 import com.cavetale.core.font.Emoji;
-import com.winthier.playercache.PlayerCache;
+import com.cavetale.core.playercache.PlayerCache;
 
 final class MailToCommand extends AbstractCommand<MailPlugin> {
     protected MailToCommand(final MailPlugin plugin) {

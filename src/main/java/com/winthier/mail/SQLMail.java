@@ -1,6 +1,6 @@
 package com.winthier.mail;
 
-import com.winthier.playercache.PlayerCache;
+import com.cavetale.core.playercache.PlayerCache;
 import com.winthier.sql.SQLRow;
 import java.text.SimpleDateFormat;
 import java.util.Date;

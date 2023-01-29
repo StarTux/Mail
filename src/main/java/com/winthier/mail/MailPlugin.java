@@ -1,23 +1,25 @@
 package com.winthier.mail;
 
-import com.cavetale.sidebar.PlayerSidebarEvent;
-import com.cavetale.sidebar.Priority;
+import com.cavetale.core.event.hud.PlayerHudEvent;
+import com.cavetale.core.event.hud.PlayerHudPriority;
 import com.winthier.sql.SQLDatabase;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import lombok.Getter;
-import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.format.NamedTextColor;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitTask;
+import static net.kyori.adventure.text.Component.text;
+import static net.kyori.adventure.text.Component.textOfChildren;
+import static net.kyori.adventure.text.format.NamedTextColor.*;
 
 @Getter
 public final class MailPlugin extends JavaPlugin implements Listener {
@@ -58,11 +60,9 @@ public final class MailPlugin extends JavaPlugin implements Listener {
     }
 
     @EventHandler
-    public void onPlayerSidebar(PlayerSidebarEvent event) {
+    public void onPlayerHud(PlayerHudEvent event) {
         if (!sidebarList.contains(event.getPlayer().getUniqueId())) return;
-        event.add(this, Priority.HIGH,
-                  Component.text("You have ", NamedTextColor.AQUA)
-                  .append(Component.text("/mail", NamedTextColor.YELLOW)));
+        event.sidebar(PlayerHudPriority.HIGH, List.of(textOfChildren(text("You have ", AQUA), text("/mail", YELLOW))));
     }
 
     void updateSidebarList() {

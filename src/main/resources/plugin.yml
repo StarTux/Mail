@@ -8,7 +8,7 @@ description: Mail Plugin
 author: StarTux
 website: https://github.com/StarTux/Mail
 
-depend: [Core, SQL, PlayerCache, Chat, Sidebar]
+depend: [Core, SQL, Chat]
 softdepend: []
 
 commands:
