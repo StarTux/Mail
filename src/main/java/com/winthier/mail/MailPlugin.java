@@ -35,7 +35,7 @@ public final class MailPlugin extends JavaPlugin implements Listener {
     public void onEnable() {
         instance = this;
         db = new SQLDatabase(this);
-        db.registerTables(SQLMail.class);
+        db.registerTable(SQLMail.class);
         if (!db.createAllTables()) {
             throw new IllegalStateException("Failed to setup database");
         }
